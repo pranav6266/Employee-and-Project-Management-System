@@ -1,34 +1,34 @@
 const express = require("express");
 const router = express.Router();
-
+const User = require("../models/users")
 
 // User Login (to be implemented)
 router.get("/",(req,res)=>{
-    console.log("This will be default login page.")
+    res.send("This will be default login page.")
 });
 // Dashboard Page
 router.get("/dashboard",(req,res)=>{
-    console.log("Dashboard Logic Comes Here")
+    res.send("Dashboard Logic Comes Here")
 });
 
 // Projects Page
 router.get("/projects",(req,res)=>{
-    console.log("Viewing projects logic here.")
+    res.send("Viewing projects logic here.")
 });
 
 // ProjectDetails Page
-router.get("/:project/view-details",(req,res)=>{
-    console.log("Viewing details of selected project comes here.")
+router.get("/project/:project/view-details",(req,res)=>{
+    res.send("Viewing details of selected project comes here.")
 });
 
 // Status Update Page
-router.get("/:project/status",(req,res)=>{
-    console.log("Status of every project will come here.");
+router.get("/project/:project/status",(req,res)=>{
+    res.send("Status of every project will come here.");
 });
 
 // Profile Page
 router.get("/profile",(req,res)=>{
-    console.log("Status of every project will come here.");
+    res.send("Status of every project will come here.");
 });
 
 module.exports = router;
