@@ -23,6 +23,11 @@
 <div class="card shadow-sm">
     <div class="card-body p-5">
         <h2 class="card-title text-center mb-4">Create Account</h2>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-danger" role="alert">
+                <%= error %>
+            </div>
+        <% } %>
         <form action="/signup" method="POST">
             <div class="mb-3">
                 <label for="name" class="form-label">Full Name</label>

@@ -63,6 +63,32 @@ router.get('/employees/add', (req, res) => {
 router.post('/employees/add', async (req, res) => {
     try {
         const { name, email, password, role, designation, department, contact, status } = req.body;
+
+        // --- Start Validation ---
+        if (!name || !email || !password || !role) {
+            return res.render('admin/add_edit_employee', {
+                user: req.session.user, page: 'employees', employee: req.body,
+                formAction: '/admin/employees/add', title: 'Add New Employee',
+                error: 'Name, email, password, and role are required fields.'
+            });
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.render('admin/add_edit_employee', {
+                user: req.session.user, page: 'employees', employee: req.body,
+                formAction: '/admin/employees/add', title: 'Add New Employee',
+                error: 'Please provide a valid email.'
+            });
+        }
+        if (password.length < 8) {
+            return res.render('admin/add_edit_employee', {
+                user: req.session.user, page: 'employees', employee: req.body,
+                formAction: '/admin/employees/add', title: 'Add New Employee',
+                error: 'Password must be at least 8 characters long.'
+            });
+        }
+        // --- End Validation ---
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const newEmployee = new User({
             name, email, password: hashedPassword, role, designation, department, contact, status
@@ -70,6 +96,14 @@ router.post('/employees/add', async (req, res) => {
         await newEmployee.save();
         res.redirect('/admin/employees');
     } catch (error) {
+        // Handle potential duplicate email error from database
+        if (error.code === 11000) {
+            return res.render('admin/add_edit_employee', {
+                user: req.session.user, page: 'employees', employee: req.body,
+                formAction: '/admin/employees/add', title: 'Add New Employee',
+                error: 'An employee with this email already exists.'
+            });
+        }
         res.status(500).send('Error creating employee.');
     }
 });
