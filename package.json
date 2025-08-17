@@ -2,9 +2,9 @@
   "name": "employee-and-project-management-system",
   "version": "1.0.0",
   "description": "This is a mini project for learning about basic implementation of backend using Node.js, Express, Ejs and MongoDB.",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon server.js"
   },
   "private": true,
   "repository": {
@@ -16,5 +16,13 @@
   "bugs": {
     "url": "https://github.com/pranav6266/Employee-and-Project-Management-System/issues"
   },
-  "homepage": "https://github.com/pranav6266/Employee-and-Project-Management-System#readme"
+  "homepage": "https://github.com/pranav6266/Employee-and-Project-Management-System#readme",
+  "devDependencies": {
+    "dotenv": "^17.2.1",
+    "nodemon": "^3.1.10"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "mongoose": "^8.17.1"
+  }
 }
