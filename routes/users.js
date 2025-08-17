@@ -1,14 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/users")
+const { isAuthenticated } = require('../middleware/authMiddleware'); // Import middleware
 
-// User Login (to be implemented)
-router.get("/",(req,res)=>{
-    res.send("This will be default login page.")
-});
+// Apply the isAuthenticated middleware to ALL routes in this file
+router.use(isAuthenticated);
+
+// All routes below are now protected and accessible by any logged-in user
 // Dashboard Page
-router.get("/dashboard",(req,res)=>{
-    res.send("Dashboard Logic Comes Here")
+router.get('/dashboard', (req, res) => {
+    res.send(`Welcome to your dashboard, ${req.session.user.name}!`);
 });
 
 // Projects Page

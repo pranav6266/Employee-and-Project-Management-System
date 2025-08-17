@@ -1,21 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const { isAdmin } = require('../middleware/authMiddleware'); // Import middleware
 
-// --- Middleware (To be Implemented) ---
-// This middleware will protect all admin routes.
-// It should check if the logged-in user has the 'admin' role.
-const isAdmin = (req, res, next) => {
-    // Placeholder for session and role check logic
-    // if (req.session.user && req.session.user.role === 'admin') {
-    //     return next();
-    // }
-    // res.redirect('/login');
-    next(); // Temporarily allowing access for development
-};
-
-// Apply the security middleware to all routes in this file
+// Apply the isAdmin middleware to ALL routes in this file
 router.use(isAdmin);
 
+// All routes below this line are now protected and only accessible by admins
 
 // --- Dashboard ---
 
@@ -24,11 +14,8 @@ router.use(isAdmin);
  * @description Displays the main admin dashboard with stats and summaries.
  */
 router.get('/dashboard', (req, res) => {
-    // Logic to fetch total employees, projects, statuses, etc.
-    console.log('Admin dashboard logic comes here.');
-    // res.render('admin/dashboard', { data });
+    res.send(`Welcome to the admin dashboard, ${req.session.user.name}!`);
 });
-
 
 // --- Employee Management ---
 
