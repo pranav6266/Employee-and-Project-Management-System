@@ -1,154 +1,288 @@
 const express = require('express');
 const router = express.Router();
-const { isAdmin } = require('../middleware/authMiddleware'); // Import middleware
+const bcrypt = require('bcrypt');
+const { isAdmin } = require('../middleware/authMiddleware');
+const User = require('../models/users');
+const Project = require('../models/projects');
+const Module = require('../models/modules');
 
 // Apply the isAdmin middleware to ALL routes in this file
 router.use(isAdmin);
 
-// All routes below this line are now protected and only accessible by admins
-
 // --- Dashboard ---
-
-/**
- * @route GET /admin/dashboard
- * @description Displays the main admin dashboard with stats and summaries.
- */
-router.get('/dashboard', (req, res) => {
-    res.send(`Welcome to the admin dashboard, ${req.session.user.name}!`);
+router.get('/dashboard', async (req, res) => {
+    try {
+        const totalEmployees = await User.countDocuments({ role: 'user' });
+        const totalProjects = await Project.countDocuments();
+        const projectStatusCounts = await Project.aggregate([
+            { $group: { _id: '$status', count: { $sum: 1 } } }
+        ]);
+        const statusCounts = projectStatusCounts.reduce((acc, status) => {
+            acc[status._id] = status.count;
+            return acc;
+        }, {});
+        res.render('admin/admin-dashboard', {
+            user: req.session.user,
+            totalEmployees,
+            totalProjects,
+            projectStatusCounts: statusCounts,
+            page: 'dashboard'
+        });
+    } catch (error) {
+        res.status(500).send('Error loading dashboard.');
+    }
 });
 
 // --- Employee Management ---
-
-/**
- * @route GET /admin/employees
- * @description Shows a list of all employees.
- */
-router.get('/employees', (req, res) => {
-    // Logic to fetch and display all users/employees
-    console.log('Manage Employees page logic here.');
-    // res.render('admin/manage_employees', { employees });
+// Display all employees
+router.get('/employees', async (req, res) => {
+    try {
+        const employees = await User.find({}); // Fetch all users
+        res.render('admin/manage_employees', {
+            user: req.session.user,
+            employees: employees,
+            page: 'employees'
+        });
+    } catch (error) {
+        res.status(500).send('Error fetching employees.');
+    }
 });
 
-/**
- * @route GET /admin/employees/add
- * @description Displays the form to add a new employee.
- */
+// Display form to add a new employee
 router.get('/employees/add', (req, res) => {
-    console.log('Display "Add Employee" form.');
-    // res.render('admin/add_edit_employee', { employee: {} });
+    res.render('admin/add_edit_employee', {
+        user: req.session.user,
+        page: 'employees',
+        employee: {}, // Pass an empty object for a new employee
+        formAction: '/admin/employees/add',
+        title: 'Add New Employee'
+    });
 });
 
-/**
- * @route POST /admin/employees/add
- * @description Handles the creation of a new employee record.
- */
-router.post('/employees/add', (req, res) => {
-    // Logic to save the new employee to the database
-    console.log('Handle new employee creation logic here.');
-    // res.redirect('/admin/employees');
+// Handle creation of a new employee
+router.post('/employees/add', async (req, res) => {
+    try {
+        const { name, email, password, role, designation, department, contact, status } = req.body;
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newEmployee = new User({
+            name, email, password: hashedPassword, role, designation, department, contact, status
+        });
+        await newEmployee.save();
+        res.redirect('/admin/employees');
+    } catch (error) {
+        res.status(500).send('Error creating employee.');
+    }
 });
 
-/**
- * @route GET /admin/employees/:employeeId/edit
- * @description Displays the form to edit an existing employee's details.
- */
-router.get('/employees/:employeeId/edit', (req, res) => {
-    // Logic to fetch employee by ID and render edit form
-    console.log(`Display "Edit Employee" form for ID: ${req.params.employeeId}`);
-    // res.render('admin/add_edit_employee', { employee });
+// Display form to edit an employee
+router.get('/employees/:id/edit', async (req, res) => {
+    try {
+        const employee = await User.findById(req.params.id);
+        res.render('admin/add_edit_employee', {
+            user: req.session.user,
+            page: 'employees',
+            employee: employee,
+            formAction: `/admin/employees/${req.params.id}/edit`,
+            title: 'Edit Employee'
+        });
+    } catch (error) {
+        res.status(500).send('Error fetching employee data.');
+    }
 });
 
-/**
- * @route POST /admin/employees/:employeeId/edit
- * @description Handles the update of an employee's record.
- */
-router.post('/employees/:employeeId/edit', (req, res) => {
-    // Logic to update the employee in the database
-    console.log(`Handle update for employee ID: ${req.params.employeeId}`);
-    // res.redirect('/admin/employees');
+// Handle update of an employee
+router.post('/employees/:id/edit', async (req, res) => {
+    try {
+        const { name, email, role, designation, department, contact, status } = req.body;
+        await User.findByIdAndUpdate(req.params.id, {
+            name, email, role, designation, department, contact, status
+        });
+        res.redirect('/admin/employees');
+    } catch (error) {
+        res.status(500).send('Error updating employee.');
+    }
 });
 
-/**
- * @route POST /admin/employees/:employeeId/delete
- * @description Deletes an employee record.
- */
-router.post('/employees/:employeeId/delete', (req, res) => {
-    // Logic to delete the employee from the database
-    console.log(`Handle delete for employee ID: ${req.params.employeeId}`);
-    // res.redirect('/admin/employees');
+// Handle deletion of an employee
+router.post('/employees/:id/delete', async (req, res) => {
+    try {
+        await User.findByIdAndDelete(req.params.id);
+        res.redirect('/admin/employees');
+    } catch (error) {
+        res.status(500).send('Error deleting employee.');
+    }
 });
-
 
 // --- Project Management ---
-
-/**
- * @route GET /admin/projects
- * @description Shows a list of all projects.
- */
-router.get('/projects', (req, res) => {
-    // Logic to fetch and display all projects
-    console.log('Manage Projects page logic here.');
-    // res.render('admin/manage_projects', { projects });
+// Display all projects
+router.get('/projects', async (req, res) => {
+    try {
+        const projects = await Project.find({}).populate('createdBy', 'name');
+        res.render('admin/manage_projects', {
+            user: req.session.user,
+            projects: projects,
+            page: 'projects'
+        });
+    } catch (error) {
+        res.status(500).send('Error fetching projects.');
+    }
 });
 
-/**
- * @route GET /admin/projects/add
- * @description Displays the form to create a new project.
- */
+// Display form to add a new project
 router.get('/projects/add', (req, res) => {
-    console.log('Display "Add Project" form.');
-    // res.render('admin/add_edit_project', { project: {} });
+    res.render('admin/add_edit_project', {
+        user: req.session.user,
+        page: 'projects',
+        project: {},
+        formAction: '/admin/projects/add',
+        title: 'Add New Project'
+    });
 });
 
-/**
- * @route POST /admin/projects/add
- * @description Handles the creation of a new project.
- */
-router.post('/projects/add', (req, res) => {
-    // Logic to save the new project to the database
-    console.log('Handle new project creation logic here.');
-    // res.redirect('/admin/projects');
+// Handle creation of a new project
+router.post('/projects/add', async (req, res) => {
+    try {
+        const { title, description, startDate, endDate, status } = req.body;
+        const newProject = new Project({
+            title, description, startDate, endDate, status,
+            createdBy: req.session.user.id
+        });
+        await newProject.save();
+        res.redirect('/admin/projects');
+    } catch (error) {
+        res.status(500).send('Error creating project.');
+    }
 });
 
-/**
- * @route GET /admin/projects/:projectId/edit
- * @description Displays the form to edit an existing project.
- */
-router.get('/projects/:projectId/edit', (req, res) => {
-    // Logic to fetch project by ID and render edit form
-    console.log(`Display "Edit Project" form for ID: ${req.params.projectId}`);
-    // res.render('admin/add_edit_project', { project });
+// Display form to edit a project
+router.get('/projects/:id/edit', async (req, res) => {
+    try {
+        const project = await Project.findById(req.params.id);
+        res.render('admin/add_edit_project', {
+            user: req.session.user,
+            page: 'projects',
+            project: project,
+            formAction: `/admin/projects/${req.params.id}/edit`,
+            title: 'Edit Project'
+        });
+    } catch (error) {
+        res.status(500).send('Error fetching project data.');
+    }
 });
 
-/**
- * @route POST /admin/projects/:projectId/edit
- * @description Handles the update of a project's details.
- */
-router.post('/projects/:projectId/edit', (req, res) => {
-    // Logic to update the project in the database
-    console.log(`Handle update for project ID: ${req.params.projectId}`);
-    // res.redirect('/admin/projects');
+// Handle update of a project
+router.post('/projects/:id/edit', async (req, res) => {
+    try {
+        const { title, description, startDate, endDate, status } = req.body;
+        await Project.findByIdAndUpdate(req.params.id, {
+            title, description, startDate, endDate, status
+        });
+        res.redirect('/admin/projects');
+    } catch (error) {
+        res.status(500).send('Error updating project.');
+    }
 });
 
-/**
- * @route POST /admin/projects/:projectId/delete
- * @description Deletes a project.
- */
-router.post('/projects/:projectId/delete', (req, res) => {
-    // Logic to delete the project from the database
-    console.log(`Handle delete for project ID: ${req.params.projectId}`);
-    // res.redirect('/admin/projects');
+// Handle deletion of a project
+router.post('/projects/:id/delete', async (req, res) => {
+    try {
+        await Project.findByIdAndDelete(req.params.id);
+        // Also delete related modules
+        await Module.deleteMany({ projectId: req.params.id });
+        res.redirect('/admin/projects');
+    } catch (error) {
+        res.status(500).send('Error deleting project.');
+    }
 });
 
-/**
- * @route GET /admin/projects/:projectId
- * @description Displays detailed information for a single project.
- */
-router.get('/projects/:projectId', (req, res) => {
-    // Logic to fetch full details of a selected project
-    console.log(`Display details for project ID: ${req.params.projectId}`);
-    // res.render('admin/project_detail', { project });
+// --- Project Detail Page ---
+router.get('/projects/:id', async (req, res) => {
+    try {
+        const project = await Project.findById(req.params.id);
+        const modules = await Module.find({ projectId: req.params.id }).populate('assignedTo', 'name');
+        const employees = await User.find({ role: 'user' }); // For assignment dropdown
+
+        res.render('admin/project_detail', {
+            user: req.session.user,
+            project: project,
+            modules: modules,
+            employees: employees,
+            page: 'projects'
+        });
+    } catch (error) {
+        res.status(500).send('Error fetching project details.');
+    }
 });
 
+
+// --- Assign Module/Task to a Project ---
+router.post('/projects/:id/assign-module', async (req, res) => {
+    try {
+        const { title, description, assignedTo, status, startDate, endDate } = req.body;
+        const newModule = new Module({
+            projectId: req.params.id,
+            title,
+            description,
+            assignedTo,
+            status,
+            startDate,
+            endDate
+        });
+        await newModule.save();
+        res.redirect(`/admin/projects/${req.params.id}`);
+    } catch (error) {
+        res.status(500).send('Error assigning module.');
+    }
+});
+
+
+// --- Admin Profile Page ---
+router.get('/profile', async (req, res) => {
+    try {
+        const adminData = await User.findById(req.session.user.id);
+        res.render("admin/profile", {
+            user: req.session.user,
+            userData: adminData,
+            page: 'profile',
+            success: req.query.success,
+            error: req.query.error
+        });
+    } catch (error) {
+        res.status(500).send("Error loading profile page.");
+    }
+});
+
+router.post("/profile", async (req, res) => {
+    try {
+        const { name, designation, department, contact } = req.body;
+        await User.findByIdAndUpdate(req.session.user.id, {
+            name, designation, department, contact
+        });
+        req.session.user.name = name; // Update session
+        res.redirect('/admin/profile?success=Profile updated successfully!');
+    } catch (error) {
+        res.redirect('/admin/profile?error=Failed to update profile.');
+    }
+});
+
+router.post("/profile/change-password", async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const user = await User.findById(req.session.user.id);
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+
+        if (!isMatch) {
+            return res.redirect('/admin/profile?error=Current password is incorrect.');
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        await user.save();
+
+        res.redirect('/admin/profile?success=Password changed successfully!');
+    } catch (error) {
+        res.redirect('/admin/profile?error=Failed to change password.');
+    }
+});
 
 module.exports = router;

@@ -9,7 +9,7 @@ const User = require('../models/users');
 // --- SIGNUP/REGISTER ---
 // Display signup form (GET) - You'll create an EJS file for this
 router.get('/signup', (req, res) => {
-    res.render('signup');
+    res.render('auth/signup');
 });
 
 // Handle signup form submission (POST)
@@ -41,7 +41,7 @@ router.post('/signup', async (req, res) => {
 // --- LOGIN ---
 // Display login form (GET)
 router.get('/login', (req, res) => {
-    res.render('login');
+    res.render('auth/login');
 });
 
 // Handle login form submission (POST)
