@@ -16,9 +16,11 @@ router.get('/dashboard', async (req, res) => {
 
         res.render('users/user-dashboard', {
             user: req.session.user,
-            assignedModules: assignedModules
+            assignedModules: assignedModules,
+            page: 'dashboard'
         });
     } catch (error) {
+
         console.error('Error fetching user dashboard data:', error);
         res.status(500).send('Error loading your dashboard.');
     }
@@ -32,8 +34,10 @@ router.get("/projects", async (req, res) => {
 
         res.render("users/projects", {
             user: req.session.user,
-            modules: userModules
+            modules: userModules,
+            page: 'projects'
         });
+
     } catch (error) {
         console.error('Error fetching user projects:', error);
         res.status(500).send('Error loading projects page.');
@@ -50,9 +54,11 @@ router.get("/project/:moduleId/view-details", async (req, res) => {
             return res.status(404).send("Task not found or you don't have permission to view it.");
         }
 
+
         res.render("users/project_detail", {
             user: req.session.user,
-            module: module
+            module: module,
+            page: 'projects'
         });
     } catch (error) {
         console.error('Error fetching module details:', error);
@@ -69,7 +75,9 @@ router.get("/project/:moduleId/status", async (req, res) => {
         }
         res.render("users/status_update", {
             user: req.session.user,
-            module: module
+
+            module: module,
+            page: 'projects'
         });
     } catch (error) {
         console.error('Error fetching module for status update:', error);
@@ -102,7 +110,6 @@ router.post("/project/:moduleId/status", async (req, res) => {
     }
 });
 
-
 // --- Profile Page (GET): Display user information ---
 router.get("/profile", async (req, res) => {
     try {
@@ -111,7 +118,8 @@ router.get("/profile", async (req, res) => {
             user: req.session.user,
             userData: userData,
             success: req.query.success, // For showing success messages
-            error: req.query.error // For showing error messages
+            error: req.query.error, // For showing
+            page: 'profile'
         });
     } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -128,6 +136,7 @@ router.post("/profile", async (req, res) => {
             designation,
             department,
             contact
+
         });
 
         // Update session name
@@ -150,6 +159,7 @@ router.post("/profile/change-password", async (req, res) => {
         const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) {
             return res.redirect('/users/profile?error=Current password is incorrect.');
+
         }
 
         // Hash new password and save
@@ -164,6 +174,5 @@ router.post("/profile/change-password", async (req, res) => {
         res.redirect('/users/profile?error=Failed to change password.');
     }
 });
-
 
 module.exports = router;
