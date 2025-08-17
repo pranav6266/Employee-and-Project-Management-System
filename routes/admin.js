@@ -6,10 +6,10 @@ const User = require('../models/users');
 const Project = require('../models/projects');
 const Module = require('../models/modules');
 
-// Apply the isAdmin middleware to ALL routes in this file
+// Middleware-route
 router.use(isAdmin);
 
-// --- Dashboard ---
+// Dashboard
 router.get('/dashboard', async (req, res) => {
     try {
         const totalEmployees = await User.countDocuments({ role: 'user' });
@@ -33,8 +33,9 @@ router.get('/dashboard', async (req, res) => {
     }
 });
 
-// --- Employee Management ---
-// Display all employees
+// Employees Management
+
+// 1. Display all employees
 router.get('/employees', async (req, res) => {
     try {
         const employees = await User.find({}); // Fetch all users
@@ -48,7 +49,7 @@ router.get('/employees', async (req, res) => {
     }
 });
 
-// Display form to add a new employee
+// 2. Add a new employee (get request for getting ui)
 router.get('/employees/add', (req, res) => {
     res.render('admin/add_edit_employee', {
         user: req.session.user,
@@ -59,12 +60,12 @@ router.get('/employees/add', (req, res) => {
     });
 });
 
-// Handle creation of a new employee
+// 2. Add a new employee (post request for sending it to db)
 router.post('/employees/add', async (req, res) => {
     try {
         const { name, email, password, role, designation, department, contact, status } = req.body;
 
-        // --- Start Validation ---
+        // Added some extra validation with standard set of rules.
         if (!name || !email || !password || !role) {
             return res.render('admin/add_edit_employee', {
                 user: req.session.user, page: 'employees', employee: req.body,
@@ -87,8 +88,9 @@ router.post('/employees/add', async (req, res) => {
                 error: 'Password must be at least 8 characters long.'
             });
         }
-        // --- End Validation ---
 
+
+        // Hashing and storing password
         const hashedPassword = await bcrypt.hash(password, 10);
         const newEmployee = new User({
             name, email, password: hashedPassword, role, designation, department, contact, status
@@ -108,7 +110,7 @@ router.post('/employees/add', async (req, res) => {
     }
 });
 
-// Display form to edit an employee
+// 3. Edit an employee (get to display ui)
 router.get('/employees/:id/edit', async (req, res) => {
     try {
         const employee = await User.findById(req.params.id);
@@ -124,7 +126,7 @@ router.get('/employees/:id/edit', async (req, res) => {
     }
 });
 
-// Handle update of an employee
+// 3. Edit an employee (post to send info to db)
 router.post('/employees/:id/edit', async (req, res) => {
     try {
         const { name, email, role, designation, department, contact, status } = req.body;
@@ -137,7 +139,7 @@ router.post('/employees/:id/edit', async (req, res) => {
     }
 });
 
-// Handle deletion of an employee
+// 4. Deletion of an employee
 router.post('/employees/:id/delete', async (req, res) => {
     try {
         await User.findByIdAndDelete(req.params.id);
@@ -147,8 +149,8 @@ router.post('/employees/:id/delete', async (req, res) => {
     }
 });
 
-// --- Project Management ---
-// Display all projects
+// Project Management
+// 1. Display all projects
 router.get('/projects', async (req, res) => {
     try {
         const projects = await Project.find({}).populate('createdBy', 'name');
@@ -162,7 +164,7 @@ router.get('/projects', async (req, res) => {
     }
 });
 
-// Display form to add a new project
+// 2. Add a new project (get to display ui)
 router.get('/projects/add', (req, res) => {
     res.render('admin/add_edit_project', {
         user: req.session.user,
@@ -173,7 +175,7 @@ router.get('/projects/add', (req, res) => {
     });
 });
 
-// Handle creation of a new project
+// 2. Add a new project (post to send data to db)
 router.post('/projects/add', async (req, res) => {
     try {
         const { title, description, startDate, endDate, status } = req.body;
@@ -188,7 +190,7 @@ router.post('/projects/add', async (req, res) => {
     }
 });
 
-// Display form to edit a project
+// 3. Updating a project (get for displaying ui)
 router.get('/projects/:id/edit', async (req, res) => {
     try {
         const project = await Project.findById(req.params.id);
@@ -204,7 +206,7 @@ router.get('/projects/:id/edit', async (req, res) => {
     }
 });
 
-// Handle update of a project
+// 3. Updating a project (post to edit in db)
 router.post('/projects/:id/edit', async (req, res) => {
     try {
         const { title, description, startDate, endDate, status } = req.body;
@@ -217,7 +219,7 @@ router.post('/projects/:id/edit', async (req, res) => {
     }
 });
 
-// Handle deletion of a project
+// 4. Deletion of a project
 router.post('/projects/:id/delete', async (req, res) => {
     try {
         await Project.findByIdAndDelete(req.params.id);
@@ -229,7 +231,7 @@ router.post('/projects/:id/delete', async (req, res) => {
     }
 });
 
-// --- Project Detail Page ---
+// Project Detail Page
 router.get('/projects/:id', async (req, res) => {
     try {
         const project = await Project.findById(req.params.id);
@@ -249,7 +251,7 @@ router.get('/projects/:id', async (req, res) => {
 });
 
 
-// --- Assign Module/Task to a Project ---
+// Assign Module/Task to a Project
 router.post('/projects/:id/assign-module', async (req, res) => {
     try {
         const { title, description, assignedTo, status, startDate, endDate } = req.body;
@@ -270,7 +272,7 @@ router.post('/projects/:id/assign-module', async (req, res) => {
 });
 
 
-// --- Admin Profile Page ---
+// Admin Profile Page
 router.get('/profile', async (req, res) => {
     try {
         const adminData = await User.findById(req.session.user.id);

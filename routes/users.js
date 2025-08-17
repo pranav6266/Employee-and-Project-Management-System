@@ -5,10 +5,9 @@ const { isAuthenticated } = require('../middleware/authMiddleware');
 const Module = require('../models/modules');
 const User = require('../models/users');
 
-// Apply the isAuthenticated middleware to ALL routes in this file
 router.use(isAuthenticated);
 
-// --- Dashboard Page ---
+// Dashboard Page
 router.get('/dashboard', async (req, res) => {
     try {
         const assignedModules = await Module.find({ assignedTo: req.session.user.id })
@@ -26,7 +25,7 @@ router.get('/dashboard', async (req, res) => {
     }
 });
 
-// --- Projects Page: View all assigned projects/tasks ---
+// Projects Page: View all assigned projects/tasks
 router.get("/projects", async (req, res) => {
     try {
         const userModules = await Module.find({ assignedTo: req.session.user.id })
@@ -44,7 +43,7 @@ router.get("/projects", async (req, res) => {
     }
 });
 
-// --- Project Detail Page: View details of a single task ---
+// Project Detail Page: View details of a single task
 router.get("/project/:moduleId/view-details", async (req, res) => {
     try {
         const module = await Module.findById(req.params.moduleId)
@@ -66,7 +65,7 @@ router.get("/project/:moduleId/view-details", async (req, res) => {
     }
 });
 
-// --- Status Update Page (GET): Display the form ---
+// Status Update Page (GET): Display the form
 router.get("/project/:moduleId/status", async (req, res) => {
     try {
         const module = await Module.findById(req.params.moduleId);
@@ -85,7 +84,7 @@ router.get("/project/:moduleId/status", async (req, res) => {
     }
 });
 
-// --- Status Update Page (POST): Handle the form submission ---
+// Status Update Page (POST): Handle the form submission
 router.post("/project/:moduleId/status", async (req, res) => {
     try {
         const { status, progressNotes } = req.body;
@@ -110,7 +109,7 @@ router.post("/project/:moduleId/status", async (req, res) => {
     }
 });
 
-// --- Profile Page (GET): Display user information ---
+// Profile Page (GET): Display user information
 router.get("/profile", async (req, res) => {
     try {
         const userData = await User.findById(req.session.user.id);
@@ -127,7 +126,7 @@ router.get("/profile", async (req, res) => {
     }
 });
 
-// --- Profile Page (POST): Handle profile details update ---
+// Profile Page (POST): Handle profile details update
 router.post("/profile", async (req, res) => {
     try {
         const { name, designation, department, contact } = req.body;
@@ -149,7 +148,7 @@ router.post("/profile", async (req, res) => {
     }
 });
 
-// --- Profile Page (POST): Handle password change ---
+// Profile Page (POST): Handle password change
 router.post("/profile/change-password", async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
