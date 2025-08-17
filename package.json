@@ -1,0 +1,20 @@
+{
+  "name": "employee-and-project-management-system",
+  "version": "1.0.0",
+  "description": "This is a mini project for learning about basic implementation of backend using Node.js, Express, Ejs and MongoDB.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pranav6266/Employee-and-Project-Management-System.git"
+  },
+  "author": "Pranav",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pranav6266/Employee-and-Project-Management-System/issues"
+  },
+  "homepage": "https://github.com/pranav6266/Employee-and-Project-Management-System#readme"
+}
