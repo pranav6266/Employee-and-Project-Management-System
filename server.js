@@ -38,6 +38,7 @@ app.use("/", authRouter);
 app.use("/users",usersRouter)
 app.use("/admin", adminRouter);
 
-app.listen(8000,()=>{
-    console.log("Server Started...")
+const PORT = process.env.PORT || 8000;
+app.listen(PORT,()=>{
+    console.log(`Server Started on port ${PORT}...`)
 })

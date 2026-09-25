@@ -9,6 +9,9 @@ const crypto = require('crypto');
 // --- FORGOT PASSWORD ROUTES ---
 
 // Display the forgot password form
+// Send visitors at the root URL to the login page
+router.get('/', (req, res) => res.redirect('/login'));
+
 router.get('/forgot-password', (req, res) => {
     res.render('auth/forgot-password');
 });

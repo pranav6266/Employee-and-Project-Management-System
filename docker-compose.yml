@@ -1,0 +1,30 @@
+name: employee-management
+
+services:
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      network: ${BUILD_NETWORK:-default}
+    image: employee-management-app
+    environment:
+      DB_URL: mongodb://mongo:27017/employee_management
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env (see .env.example)}
+    ports:
+      - "${APP_PORT:-3008}:8000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
